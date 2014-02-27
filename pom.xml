@@ -52,6 +52,12 @@
             <version>2.14.3</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
+            <artifactId>concurrentlinkedhashmap-lru</artifactId>
+            <version>1.4</version>
+        </dependency>
+
         <!-- test -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
