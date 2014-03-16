@@ -34,7 +34,20 @@ public class SmartCacheTest {
         cache.put("key", "value");
 
         // then
-        assertThat(cache.get("key")).isEqualTo("value");
+        assertThat(cache.get("key", null)).isEqualTo("value");
     }
 
+    @Test
+    public void shouldNotRunTwoRequestForSameKeyAtTheSameTime() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        CountingLongRunningAction action = new CountingLongRunningAction(1000);
+
+        // when
+        cache.get("key", action);
+        cache.get("key", action);
+
+        // then
+        assertThat(action.getCounter()).isEqualTo(1);
+    }
 }

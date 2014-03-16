@@ -16,15 +16,17 @@
 package org.kielo.smartcache;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Adam Dubiel
  */
 public class SmartCache {
+
+    private final static Logger logger = LoggerFactory.getLogger(SmartCache.class);
 
     private final ConcurrentMap<String, CacheEntry> cache = new ConcurrentLinkedHashMap.Builder<String, CacheEntry>()
             .maximumWeightedCapacity(10)
@@ -40,11 +42,11 @@ public class SmartCache {
     }
 
     public void put(final String key, final Object object) {
-
+        cache.put(key, new CacheEntry(object));
     }
 
     public <T> Future<T> put(final String key, final CacheableAction<T> action) {
-        return requestQueue.enqueue(key, new QueueAction<T>() {
+        return requestQueue.enqueue(key, new QueuedAction<T>() {
             @Override
             public T resolve() {
                 T resolvedObject = action.resolve();
@@ -57,11 +59,29 @@ public class SmartCache {
     @SuppressWarnings("unchecked")
     public <T> T get(String key, final CacheableAction<T> action) {
         CacheEntry entry = cache.get(key);
+        T value = null;
+
         if (entry == null || expirationPolicy.expire(entry)) {
-            return put(key, action).get();
+            try {
+                value = resolve(put(key, action), 1000);
+            } catch (TimeoutException exception) {
+                logger.info("Action timed out after {} milliseconds, returning cached value", 1000);
+            }
         }
 
-        return (T) entry.value();
+        if (entry != null && value == null) {
+            value = entry.value();
+        }
+
+        return value;
+    }
+
+    private <T> T resolve(Future<T> future, int maxWaitTime) throws TimeoutException {
+        try {
+            return future.get(maxWaitTime, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException exception) {
+            throw new ActionResolvingException(exception);
+        }
     }
 
     public void evict(String key) {

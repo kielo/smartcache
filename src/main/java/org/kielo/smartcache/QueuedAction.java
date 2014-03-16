@@ -13,30 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.kielo.smartcache;
 
 /**
  *
  * @author Adam Dubiel
  */
-public class CacheEntry {
+public interface QueuedAction<T> {
 
-    private final Object value;
+    T resolve();
 
-    private final long creationTime;
-
-    CacheEntry(Object value) {
-        this.value = value;
-        this.creationTime = System.currentTimeMillis();
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T value() {
-        return (T) value;
-    }
-
-    public long creationTime() {
-        return creationTime;
-    }
 }

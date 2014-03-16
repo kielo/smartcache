@@ -29,9 +29,9 @@
     </developers>
 
     <scm>
-        <url>https://github.com/adamdubiel/smartcache</url>
-        <connection>scm:git:git@github.com:adamdubiel/smartcache.git</connection>
-        <developerConnection>scm:git:git@github.com:adamdubiel/smartcache.git</developerConnection>
+        <url>https://github.com/kielo/smartcache</url>
+        <connection>scm:git:git@github.com:kielo/smartcache.git</connection>
+        <developerConnection>scm:git:git@github.com:kielo/smartcache.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 

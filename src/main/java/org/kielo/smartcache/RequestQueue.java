@@ -34,20 +34,29 @@ class RequestQueue {
         this.executor = executor;
     }
 
-    @SuppressWarnings("unchecked")
-    <T> Future<T> enqueue(String key, final QueueAction<T> action) {
-        Future<?> future;
+    <T> Future<T> enqueue(String key, final QueuedAction<T> action) {
+        return putAndSchedule(key, action);
+    }
+
+    <T> Future<T> syncEnqueue(String key, final QueuedAction<T> action) {
         synchronized (queue) {
-            if (!queue.containsKey(key)) {
-                future = queue.put(key, executor.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        action.resolve();
-                    }
-                }));
-            } else {
-                future = queue.get(key);
-            }
+            return putAndSchedule(key, action);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> Future<T> putAndSchedule(String key, final QueuedAction<T> action) {
+        Future<?> future;
+        if (!queue.containsKey(key)) {
+            future = executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    action.resolve();
+                }
+            });
+            queue.put(key, future);
+        } else {
+            future = queue.get(key);
         }
 
         return (Future<T>) future;

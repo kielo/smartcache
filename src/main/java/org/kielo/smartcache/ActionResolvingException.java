@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Adam Dubiel, Przemek Hertel.
+ * Copyright 2014 Adam Dubiel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,11 @@ package org.kielo.smartcache;
  *
  * @author Adam Dubiel
  */
-public class CacheEntry {
+@SuppressWarnings("serial")
+public class ActionResolvingException extends RuntimeException {
 
-    private final Object value;
-
-    private final long creationTime;
-
-    CacheEntry(Object value) {
-        this.value = value;
-        this.creationTime = System.currentTimeMillis();
+    ActionResolvingException(Throwable exception) {
+        super(exception);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T value() {
-        return (T) value;
-    }
-
-    public long creationTime() {
-        return creationTime;
-    }
 }
