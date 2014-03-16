@@ -37,11 +37,11 @@ public class SmartCacheTest {
         assertThat(cache.get("key", null)).isEqualTo("value");
     }
 
-    @Test
+    @Test(groups = "integration")
     public void shouldNotRunTwoRequestForSameKeyAtTheSameTime() {
         // given
         SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
-        CountingLongRunningAction action = new CountingLongRunningAction(1000);
+        CountingLongRunningAction action = CountingLongRunningAction.waiting(100);
 
         // when
         cache.get("key", action);
@@ -49,5 +49,33 @@ public class SmartCacheTest {
 
         // then
         assertThat(action.getCounter()).isEqualTo(1);
+    }
+
+    @Test
+    public void shouldNotRefreshCacheWhenFreshKeyIsInCache() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        CountingLongRunningAction action = CountingLongRunningAction.immediate();
+        cache.get("key", action);
+
+        // when
+        cache.get("key", action);
+
+        // then
+        assertThat(action.getCounter()).isEqualTo(1);
+    }
+
+    @Test
+    public void shouldRunActionWhenActionInCacheIsExpired() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new ImmediateExpirationPolicy());
+        CountingLongRunningAction action = CountingLongRunningAction.immediate();
+
+        // when
+        cache.get("key", action);
+        cache.get("key", action);
+
+        // then
+        assertThat(action.getCounter()).isEqualTo(2);
     }
 }

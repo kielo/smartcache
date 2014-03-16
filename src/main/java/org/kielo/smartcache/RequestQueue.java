@@ -34,18 +34,18 @@ class RequestQueue {
         this.executor = executor;
     }
 
-    <T> Future<T> enqueue(String key, final QueuedAction<T> action) {
+    <T> RequestQueueFuture<T> enqueue(String key, final QueuedAction<T> action) {
         return putAndSchedule(key, action);
     }
 
-    <T> Future<T> syncEnqueue(String key, final QueuedAction<T> action) {
+    <T> RequestQueueFuture<T> syncEnqueue(String key, final QueuedAction<T> action) {
         synchronized (queue) {
             return putAndSchedule(key, action);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> Future<T> putAndSchedule(String key, final QueuedAction<T> action) {
+    private <T> RequestQueueFuture<T> putAndSchedule(String key, final QueuedAction<T> action) {
         Future<?> future;
         if (!queue.containsKey(key)) {
             future = executor.submit(new Runnable() {
@@ -59,6 +59,10 @@ class RequestQueue {
             future = queue.get(key);
         }
 
-        return (Future<T>) future;
+        return new RequestQueueFuture<T>(this, (Future<T>) future, key);
+    }
+
+    void remove(String key) {
+        queue.remove(key);
     }
 }

@@ -23,19 +23,37 @@ public class CountingLongRunningAction implements CacheableAction<Integer> {
 
     private final int waitDuration;
 
+    private final boolean wait;
+
     private volatile int counter = 0;
 
-    public CountingLongRunningAction(int waitDuration) {
+    private CountingLongRunningAction(int waitDuration) {
         this.waitDuration = waitDuration;
+        this.wait = true;
+    }
+
+    private CountingLongRunningAction() {
+        this.waitDuration = 0;
+        this.wait = false;
+    }
+
+    public static CountingLongRunningAction waiting(int waitDuration) {
+        return new CountingLongRunningAction(waitDuration);
+    }
+
+    public static CountingLongRunningAction immediate() {
+        return new CountingLongRunningAction();
     }
 
     @Override
     public synchronized Integer resolve() {
         counter++;
-        try {
-            this.wait(waitDuration);
-        } catch (InterruptedException exception) {
-            throw new IllegalStateException(exception);
+        if (wait) {
+            try {
+                this.wait(waitDuration);
+            } catch (InterruptedException exception) {
+                throw new IllegalStateException(exception);
+            }
         }
         return counter;
     }

@@ -45,7 +45,7 @@ public class SmartCache {
         cache.put(key, new CacheEntry(object));
     }
 
-    public <T> Future<T> put(final String key, final CacheableAction<T> action) {
+    <T> RequestQueueFuture<T> put(final String key, final CacheableAction<T> action) {
         return requestQueue.enqueue(key, new QueuedAction<T>() {
             @Override
             public T resolve() {
@@ -63,7 +63,7 @@ public class SmartCache {
 
         if (entry == null || expirationPolicy.expire(entry)) {
             try {
-                value = resolve(put(key, action), 1000);
+                value = put(key, action).resolve(1000);
             } catch (TimeoutException exception) {
                 logger.info("Action timed out after {} milliseconds, returning cached value", 1000);
             }
@@ -74,14 +74,6 @@ public class SmartCache {
         }
 
         return value;
-    }
-
-    private <T> T resolve(Future<T> future, int maxWaitTime) throws TimeoutException {
-        try {
-            return future.get(maxWaitTime, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException exception) {
-            throw new ActionResolvingException(exception);
-        }
     }
 
     public void evict(String key) {
