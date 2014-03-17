@@ -67,6 +67,9 @@ public class SmartCache {
             } catch (TimeoutException exception) {
                 logger.info("Action timed out after {} milliseconds, returning cached value", 1000);
             }
+            catch(Throwable throwable) {
+                logger.info("Action bailed, returning cached value", throwable);
+            }
         }
 
         if (entry != null && value == null) {
