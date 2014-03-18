@@ -21,36 +21,31 @@ import java.util.concurrent.*;
  *
  * @author Adam Dubiel
  */
-class RequestQueue {
+class RequestAggregator {
 
     private final ConcurrentMap<String, Future<?>> queue = new ConcurrentHashMap<>();
 
     private final ExecutorService executor;
 
-    RequestQueue(ExecutorService executor) {
+    RequestAggregator(ExecutorService executor) {
         this.executor = executor;
     }
 
-    <T> RequestQueueFuture<T> enqueue(String key, final QueuedAction<T> action) {
+    <T> RequestQueueFuture<T> aggregate(String key, final Callable<T> action) {
         return putAndSchedule(key, action);
     }
 
-    <T> RequestQueueFuture<T> syncEnqueue(String key, final QueuedAction<T> action) {
+    <T> RequestQueueFuture<T> syncAggregate(String key, final Callable<T> action) {
         synchronized (queue) {
             return putAndSchedule(key, action);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private <T> RequestQueueFuture<T> putAndSchedule(String key, final QueuedAction<T> action) {
+    private <T> RequestQueueFuture<T> putAndSchedule(String key, final Callable<T> action) {
         Future<?> future;
         if (!queue.containsKey(key)) {
-            future = executor.submit(new Callable<T>() {
-                @Override
-                public T call() {
-                    return action.resolve();
-                }
-            });
+            future = executor.submit(action);
             queue.put(key, future);
         } else {
             future = queue.get(key);

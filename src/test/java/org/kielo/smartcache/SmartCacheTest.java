@@ -34,7 +34,7 @@ public class SmartCacheTest {
         cache.put("key", "value");
 
         // then
-        assertThat(cache.get("key", null)).isEqualTo("value");
+        assertThat(cache.get("key", null).result()).isEqualTo("value");
     }
 
     @Test(groups = "integration")
@@ -77,5 +77,18 @@ public class SmartCacheTest {
 
         // then
         assertThat(action.getCounter()).isEqualTo(2);
+    }
+
+    @Test
+    public void shouldReturnValueFromResolvedAction() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        CountingLongRunningAction action = CountingLongRunningAction.immediate();
+
+        // when
+        int value = cache.get("key", action).result();
+
+        // then
+        assertThat(value).isEqualTo(1);
     }
 }

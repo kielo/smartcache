@@ -25,15 +25,19 @@ import org.slf4j.LoggerFactory;
  * @author Adam Dubiel
  */
 public class SmartCache {
+
     private final static Logger logger = LoggerFactory.getLogger(SmartCache.class);
+
     private static final int DEFAULT_TIMEOUT = 1000;
 
     private final ConcurrentMap<String, CacheEntry> cache = new ConcurrentLinkedHashMap.Builder<String, CacheEntry>()
             .maximumWeightedCapacity(10)
             .build();
 
-    private final RequestQueue requestQueue;
+    private final RequestAggregator requestQueue;
+
     private final int actionTimeout;
+
     private final ExpirationPolicy expirationPolicy;
 
     public SmartCache(ExecutorService executorService, ExpirationPolicy expirationPolicy) {
@@ -46,7 +50,7 @@ public class SmartCache {
      */
     public SmartCache(ExecutorService executorService, ExpirationPolicy expirationPolicy, int actionTimeout) {
         this.actionTimeout = actionTimeout;
-        this.requestQueue = new RequestQueue(executorService);
+        this.requestQueue = new RequestAggregator(executorService);
         this.expirationPolicy = expirationPolicy;
     }
 
@@ -54,11 +58,11 @@ public class SmartCache {
         cache.put(key, new CacheEntry(object));
     }
 
-    <T> RequestQueueFuture<T> put(final String key, final CacheableAction<T> action) {
-        return requestQueue.enqueue(key, new QueuedAction<T>() {
+    private <T> RequestQueueFuture<T> put(final String key, final Callable<T> action) {
+        return requestQueue.aggregate(key, new Callable<T>() {
             @Override
-            public T resolve() {
-                T resolvedObject = action.resolve();
+            public T call() throws Exception {
+                T resolvedObject = action.call();
                 cache.put(key, new CacheEntry(resolvedObject));
                 return resolvedObject;
             }
@@ -66,18 +70,20 @@ public class SmartCache {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T get(String key, final CacheableAction<T> action) {
+    public <T> ActionResult<T> get(String key, final Callable<T> action) {
         CacheEntry entry = cache.get(key);
         T value = null;
+        Throwable caughtException = null;
 
         if (entry == null || expirationPolicy.expire(entry)) {
             try {
                 value = put(key, action).resolve(actionTimeout);
-            } catch (TimeoutException exception) {
+            } catch (TimeoutException timeoutException) {
                 logger.info("Action timed out after {} milliseconds, returning cached value", actionTimeout);
-            }
-            catch(Throwable throwable) {
+                caughtException = timeoutException;
+            } catch (Throwable throwable) {
                 logger.info("Action bailed, returning cached value", throwable);
+                caughtException = throwable;
             }
         }
 
@@ -85,7 +91,7 @@ public class SmartCache {
             value = entry.value();
         }
 
-        return value;
+        return new ActionResult<>(value, caughtException);
     }
 
     public void evict(String key) {

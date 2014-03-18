@@ -15,9 +15,6 @@
  */
 package org.kielo.smartcache;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -28,13 +25,14 @@ import java.util.concurrent.TimeoutException;
  * @author Adam Dubiel
  */
 public class RequestQueueFuture<T> {
-    private final RequestQueue queue;
+
+    private final RequestAggregator queue;
 
     private final Future<T> future;
 
     private final String key;
 
-    RequestQueueFuture(RequestQueue queue, Future<T> future, String key) {
+    RequestQueueFuture(RequestAggregator queue, Future<T> future, String key) {
         this.queue = queue;
         this.future = future;
         this.key = key;
@@ -46,12 +44,11 @@ public class RequestQueueFuture<T> {
             value = future.get(maxWaitTime, TimeUnit.MILLISECONDS);
         } catch (ExecutionException exception) {
             throw new ActionResolvingException(exception.getCause());
-        }
-        catch( InterruptedException i) {
-            // Restore the interrupted status & return value from cache (if any)
+        } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
         }
         queue.remove(key);
+
         return value;
     }
 

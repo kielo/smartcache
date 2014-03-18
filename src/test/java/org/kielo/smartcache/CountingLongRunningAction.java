@@ -15,11 +15,13 @@
  */
 package org.kielo.smartcache;
 
+import java.util.concurrent.Callable;
+
 /**
  *
  * @author Adam Dubiel
  */
-public class CountingLongRunningAction implements CacheableAction<Integer> {
+public class CountingLongRunningAction implements Callable<Integer> {
 
     private final int waitDuration;
 
@@ -46,7 +48,7 @@ public class CountingLongRunningAction implements CacheableAction<Integer> {
     }
 
     @Override
-    public synchronized Integer resolve() {
+    public synchronized Integer call() {
         counter++;
         if (wait) {
             try {
