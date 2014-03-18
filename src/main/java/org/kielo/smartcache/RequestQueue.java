@@ -15,10 +15,7 @@
  */
 package org.kielo.smartcache;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  *
@@ -48,10 +45,10 @@ class RequestQueue {
     private <T> RequestQueueFuture<T> putAndSchedule(String key, final QueuedAction<T> action) {
         Future<?> future;
         if (!queue.containsKey(key)) {
-            future = executor.submit(new Runnable() {
+            future = executor.submit(new Callable<T>() {
                 @Override
-                public void run() {
-                    action.resolve();
+                public T call() {
+                    return action.resolve();
                 }
             });
             queue.put(key, future);
