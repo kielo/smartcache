@@ -81,6 +81,9 @@ public class SmartCache {
             } catch (TimeoutException timeoutException) {
                 logger.info("Action timed out after {} milliseconds, returning cached value", actionTimeout);
                 caughtException = timeoutException;
+            } catch (ActionResolvingException ee) {
+                logger.info("Action bailed, returning cached value", ee.getCause());
+                caughtException = ee.getCause();
             } catch (Throwable throwable) {
                 logger.info("Action bailed, returning cached value", throwable);
                 caughtException = throwable;
