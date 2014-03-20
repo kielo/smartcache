@@ -14,7 +14,24 @@ blackout. **SmartCache** is a lightweight library that wants to help solve this 
 
 ## How does it work?
 
-Hah, good question, have to code first :)
+Usual cache works on objects - naive implementation is as simple as associate object V with key K and store it.
+**SmartCache** operates on callable actions instead. When getting item from cache, you actually need to provide action
+that can resolve it. If result of this action is already cached, it is returned without calling possibly long-running action.
+Otherwise action is called and unless it exceeds configurable timeout or other exception is thrown, result of action
+is returned and stored in cache.
+
+**SmartCache** protects against calling multiple same actions simultaneously using action aggregation.
+
+
+## How to use it?
+
+```java
+SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+cache.registerRegion(new Region("region", new TimeExpirationPolicy(10000), 5, 1000));
+
+T value = cache.get("region", "key", /* new Callable<T> */);
+```
+
 
 ## License
 

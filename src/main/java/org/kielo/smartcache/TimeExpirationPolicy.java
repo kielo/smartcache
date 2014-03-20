@@ -25,6 +25,11 @@ public class TimeExpirationPolicy implements ExpirationPolicy {
 
     private final long timeToIdle;
 
+    public TimeExpirationPolicy(long timeToLive) {
+        this.timeToLive = timeToLive;
+        this.timeToIdle = 0;
+    }
+
     public TimeExpirationPolicy(long timeToLive, long timeToIdle) {
         this.timeToLive = timeToLive;
         this.timeToIdle = timeToIdle;
