@@ -15,7 +15,6 @@
  */
 package org.kielo.smartcache;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,64 +27,53 @@ public class SmartCache {
 
     private final static Logger logger = LoggerFactory.getLogger(SmartCache.class);
 
-    private static final int DEFAULT_TIMEOUT = 1000;
-
-    private final ConcurrentMap<String, CacheEntry> cache = new ConcurrentLinkedHashMap.Builder<String, CacheEntry>()
-            .maximumWeightedCapacity(10)
-            .build();
+    private final CacheRegions regions = new CacheRegions();
 
     private final RequestAggregator requestQueue;
 
-    private final int actionTimeout;
-
-    private final ExpirationPolicy expirationPolicy;
-
-    public SmartCache(ExecutorService executorService, ExpirationPolicy expirationPolicy) {
-        this(executorService, expirationPolicy, DEFAULT_TIMEOUT);
+    public SmartCache(ExecutorService executorService) {
+        requestQueue = new RequestAggregator(executorService);
     }
 
-    /**
-     * @param actionTimeout max time to wait for action result in millis.
-     *                      When exceeded, client gets value from cache (if any)
-     */
-    public SmartCache(ExecutorService executorService, ExpirationPolicy expirationPolicy, int actionTimeout) {
-        this.actionTimeout = actionTimeout;
-        this.requestQueue = new RequestAggregator(executorService);
-        this.expirationPolicy = expirationPolicy;
+    public void registerRegion(Region region) {
+        regions.register(region);
     }
 
-    public void put(final String key, final Object object) {
-        cache.put(key, new CacheEntry(object));
+    public void put(String regionName, String key, Object object) {
+        regions.region(regionName).put(key, object);
     }
 
-    private <T> RequestQueueFuture<T> put(final String key, final Callable<T> action) {
-        return requestQueue.aggregate(key, new Callable<T>() {
+    private <T> RequestQueueFuture<T> put(final String regionName, final String key, final Callable<T> action) {
+        final String fullKey = Region.key(regionName, key);
+        return requestQueue.aggregate(fullKey, new Callable<T>() {
             @Override
             public T call() throws Exception {
                 T resolvedObject = action.call();
-                cache.put(key, new CacheEntry(resolvedObject));
+                regions.region(regionName).put(key, resolvedObject);
                 return resolvedObject;
             }
         });
     }
 
     @SuppressWarnings("unchecked")
-    public <T> ActionResult<T> get(String key, final Callable<T> action) {
-        CacheEntry entry = cache.get(key);
+    public <T> ActionResult<T> get(String regionName, String key, final Callable<T> action) {
+        Region region = regions.region(regionName);
+        CacheEntry entry = region.get(key);
+
         T value = null;
         Throwable caughtException = null;
 
-        if (entry == null || expirationPolicy.expire(entry)) {
+        if (entry == null || region.expirationPolicy().expire(entry)) {
             try {
-                value = put(key, action).resolve(actionTimeout);
+                value = put(regionName, key, action).resolve(region.timeout());
             } catch (TimeoutException timeoutException) {
-                logger.info("Action timed out after {} milliseconds, returning cached value", actionTimeout);
+                logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
                 caughtException = timeoutException;
             } catch (ActionResolvingException actionException) {
-                logger.info("Action bailed, returning cached value", actionException.getCause());
+                logger.info("Action failed, returning cached value with exception: {}", actionException.toString());
                 caughtException = actionException.getCause();
             } catch (Exception exception) {
-                logger.info("Action bailed, returning cached value", exception);
+                logger.info("Action failed, returning cached value with exception: {} {}", exception.getClass().getSimpleName(), exception.getMessage());
                 caughtException = exception;
             }
         }
@@ -97,11 +85,15 @@ public class SmartCache {
         return new ActionResult<>(value, caughtException);
     }
 
-    public void evict(String key) {
-        cache.remove(key);
+    public void evict(String regionName, String key) {
+        regions.region(regionName).evict(key);
+    }
+
+    public void evict(String regionName) {
+        regions.region(regionName).evictAll();
     }
 
     public void evict() {
-        cache.clear();
+        regions.evict();
     }
 }

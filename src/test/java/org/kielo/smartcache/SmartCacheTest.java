@@ -28,24 +28,26 @@ public class SmartCacheTest {
     @Test
     public void shouldPutObjectIntoCache() {
         // given
-        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
 
         // when
-        cache.put("key", "value");
+        cache.put("region", "key", "value");
 
         // then
-        assertThat(cache.get("key", null).result()).isEqualTo("value");
+        assertThat(cache.get("region", "key", null).result()).isEqualTo("value");
     }
 
     @Test(groups = "integration")
     public void shouldNotRunTwoRequestForSameKeyAtTheSameTime() {
         // given
-        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
         CountingLongRunningAction action = CountingLongRunningAction.waiting(100);
 
         // when
-        cache.get("key", action);
-        cache.get("key", action);
+        cache.get("region", "key", action);
+        cache.get("region", "key", action);
 
         // then
         assertThat(action.getCounter()).isEqualTo(1);
@@ -54,12 +56,13 @@ public class SmartCacheTest {
     @Test
     public void shouldNotRefreshCacheWhenFreshKeyIsInCache() {
         // given
-        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
         CountingLongRunningAction action = CountingLongRunningAction.immediate();
-        cache.get("key", action);
+        cache.get("region", "key", action);
 
         // when
-        cache.get("key", action);
+        cache.get("region", "key", action);
 
         // then
         assertThat(action.getCounter()).isEqualTo(1);
@@ -68,12 +71,13 @@ public class SmartCacheTest {
     @Test
     public void shouldRunActionWhenActionInCacheIsExpired() {
         // given
-        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new ImmediateExpirationPolicy());
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new ImmediateExpirationPolicy(), 5, 1000));
         CountingLongRunningAction action = CountingLongRunningAction.immediate();
 
         // when
-        cache.get("key", action);
-        cache.get("key", action);
+        cache.get("region", "key", action);
+        cache.get("region", "key", action);
 
         // then
         assertThat(action.getCounter()).isEqualTo(2);
@@ -82,11 +86,12 @@ public class SmartCacheTest {
     @Test
     public void shouldReturnValueFromResolvedAction() {
         // given
-        SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new EternalExpirationPolicy());
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
         CountingLongRunningAction action = CountingLongRunningAction.immediate();
 
         // when
-        int value = cache.get("key", action).result();
+        int value = cache.get("region", "key", action).result();
 
         // then
         assertThat(value).isEqualTo(1);

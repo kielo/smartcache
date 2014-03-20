@@ -23,7 +23,7 @@ import java.util.concurrent.*;
  */
 class RequestAggregator {
 
-    private final ConcurrentMap<String, Future<?>> queue = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Future<?>> aggregator = new ConcurrentHashMap<>();
 
     private final ExecutorService executor;
 
@@ -36,7 +36,7 @@ class RequestAggregator {
     }
 
     <T> RequestQueueFuture<T> syncAggregate(String key, final Callable<T> action) {
-        synchronized (queue) {
+        synchronized (aggregator) {
             return putAndSchedule(key, action);
         }
     }
@@ -44,17 +44,21 @@ class RequestAggregator {
     @SuppressWarnings("unchecked")
     private <T> RequestQueueFuture<T> putAndSchedule(String key, final Callable<T> action) {
         Future<?> future;
-        if (!queue.containsKey(key)) {
+        if (!aggregator.containsKey(key)) {
             future = executor.submit(action);
-            queue.put(key, future);
+            aggregator.put(key, future);
         } else {
-            future = queue.get(key);
+            future = aggregator.get(key);
         }
 
         return new RequestQueueFuture<T>(this, (Future<T>) future, key);
     }
 
     void remove(String key) {
-        queue.remove(key);
+        aggregator.remove(key);
+    }
+
+    boolean contains(String key) {
+        return aggregator.containsKey(key);
     }
 }

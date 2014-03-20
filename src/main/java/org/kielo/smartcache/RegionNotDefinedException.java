@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Adam Dubiel.
+ * Copyright 2014 Adam Dubiel, Przemek Hertel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,11 @@ package org.kielo.smartcache;
  * @author Adam Dubiel
  */
 @SuppressWarnings("serial")
-public class ActionResolvingException extends RuntimeException {
+public class RegionNotDefinedException extends RuntimeException {
 
-    ActionResolvingException(Throwable exception) {
-        super(exception);
-    }
-
-    @Override
-    public String toString() {
-        Throwable cause = getCause();
-        return cause == null ? "Unknown (no cause)"
-                : cause.getClass().getSimpleName() + " " + cause.getMessage();
+    RegionNotDefinedException(String regionName) {
+        super("Region with name " + regionName + " was not defined.\n"
+                + "Register regions via SmartCache#registerRegion() before using them.");
     }
 
 }

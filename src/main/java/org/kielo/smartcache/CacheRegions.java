@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Adam Dubiel.
+ * Copyright 2014 Adam Dubiel, Przemek Hertel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,35 @@
  */
 package org.kielo.smartcache;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
  * @author Adam Dubiel
  */
-@SuppressWarnings("serial")
-public class ActionResolvingException extends RuntimeException {
+class CacheRegions {
 
-    ActionResolvingException(Throwable exception) {
-        super(exception);
+    private final Map<String, Region> regions = new HashMap<>();
+
+    CacheRegions() {
     }
 
-    @Override
-    public String toString() {
-        Throwable cause = getCause();
-        return cause == null ? "Unknown (no cause)"
-                : cause.getClass().getSimpleName() + " " + cause.getMessage();
+    void register(Region region) {
+        regions.put(region.name(), region);
     }
 
+    Region region(String name) {
+        Region region = regions.get(name);
+        if (region != null) {
+            return region;
+        }
+        throw new RegionNotDefinedException(name);
+    }
+
+    void evict() {
+        for(Region region : regions.values()) {
+            region.evictAll();
+        }
+    }
 }
