@@ -46,7 +46,7 @@ public class Region {
     }
 
     public Region(String name, ExpirationPolicy expirationPolicy, int capacity, int timeout) {
-        this(name, expirationPolicy, null, timeout, timeout);
+        this(name, expirationPolicy, null, capacity, timeout);
     }
 
     public static String key(String regionName, String key) {
