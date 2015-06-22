@@ -62,10 +62,12 @@ public class SmartCache {
 
         T value = null;
         Throwable caughtException = null;
+        boolean fromCache = entry != null;
 
         if (entry == null || region.expirationPolicy().expire(entry)) {
             try {
                 value = put(regionName, key, action).resolve(region.timeout());
+                fromCache = false;
             } catch (TimeoutException timeoutException) {
                 logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
                 caughtException = timeoutException;
@@ -82,7 +84,7 @@ public class SmartCache {
             value = entry.value();
         }
 
-        return new ActionResult<>(value, caughtException);
+        return new ActionResult<>(value, caughtException, fromCache);
     }
 
     public void evict(String regionName, String key) {

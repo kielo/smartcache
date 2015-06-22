@@ -25,17 +25,20 @@ public class ActionResult<T> {
 
     private final Throwable caughtException;
 
-    public ActionResult(T result, Throwable caughtException) {
+    private final boolean fromCache;
+
+    public ActionResult(T result, Throwable caughtException, boolean fromCache) {
         this.result = result;
         this.caughtException = caughtException;
+        this.fromCache = fromCache;
     }
 
-    public static <T> ActionResult<T> success(T result) {
-        return new ActionResult<>(result, null);
+    public static <T> ActionResult<T> success(T result, boolean fromCache) {
+        return new ActionResult<>(result, null, fromCache);
     }
 
-    public static <T> ActionResult<T> failed(Throwable cause) {
-        return new ActionResult<>(null, cause);
+    public static <T> ActionResult<T> failed(Throwable cause, boolean fromCache) {
+        return new ActionResult<>(null, cause, fromCache);
     }
 
     public boolean hasResult() {
@@ -54,4 +57,7 @@ public class ActionResult<T> {
         return caughtException;
     }
 
+    public boolean isFromCache() {
+        return fromCache;
+    }
 }
