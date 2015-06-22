@@ -53,6 +53,22 @@ public class SmartCacheTest {
         assertThat(action.getCounter()).isEqualTo(1);
     }
 
+    @Test(groups = "integration")
+    public void shouldReturnCacheHit() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
+        CountingLongRunningAction action = CountingLongRunningAction.immediate();
+
+        // when
+        ActionResult<Integer> first = cache.get("region", "key", action);
+        ActionResult<Integer> second = cache.get("region", "key", action);
+
+        // then
+        assertThat(first.isFromCache()).isFalse();
+        assertThat(second.isFromCache()).isTrue();
+    }
+
     @Test
     public void shouldNotRefreshCacheWhenFreshKeyIsInCache() {
         // given
