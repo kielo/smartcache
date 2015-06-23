@@ -1,0 +1,3 @@
+rootProject.name = 'smartcache'
+
+include 'smartcache-core'

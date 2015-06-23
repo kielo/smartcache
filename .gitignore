@@ -1,8 +1,47 @@
-target/
-nb-configuration.xml
+## IDE specific
+# Eclipse
+.buildpath
+.project
+.settings/
+.classpath
 
+# JetBrains
 .idea/
 *.iml
+*.ipr
 *.iws
+atlassian-ide-plugin.xml
 
-/nbactions.xml
+# NetBeans
+nbproject/
+
+## OS specific
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# java
+/target/*
+
+/target
+/service/target/
+/nb-configuration.xml
+/classes
+
+#gradle config
+.gradle
+sonar-project.properties
+.sonar
+
+#project binaries
+build
+out
+
+#logfiles
+*.log
+gc.log.0
+
+/config
+.java-version

@@ -1,0 +1,57 @@
+plugins {
+    id 'pl.allegro.tech.build.axion-release' version '1.2.4'
+}
+
+scmVersion {
+    tag {
+        prefix = 'smartcache'
+    }
+}
+
+
+allprojects {
+    project.group = 'org.kielo.smartcache'
+    project.version = scmVersion.version
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'maven'
+
+    apply from: project.rootProject.file('./gradle/mavenCentralPublishing.gradle')
+
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.7'
+        compile group: 'org.picocontainer', name: 'picocontainer', version: '2.14.3'
+        compile group: 'com.googlecode.concurrentlinkedhashmap', name: 'concurrentlinkedhashmap-lru', version: '1.4'
+
+        testCompile group: 'ch.qos.logback', name: 'logback-core', version: '1.0.13'
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'
+
+        testCompile group: 'org.testng', name: 'testng', version: '6.8.1'
+        testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
+        testCompile group: 'org.assertj', name: 'assertj-core', version: '1.6.1'
+        testCompile group: 'com.googlecode.catch-exception', name: 'catch-exception', version: '1.2.0'
+    }
+
+    test {
+        useTestNG()
+
+        testLogging {
+            exceptionFormat = 'full'
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.4'
+}

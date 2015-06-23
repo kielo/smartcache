@@ -1,8 +1,15 @@
 language: java
-script: mvn deploy --settings project-resources/ci-settings.xml
+
+install: ./gradlew assemble
+script: ./gradlew check
+
+jdk:
+  - oraclejdk8
+
 branches:
   only:
   - master
+
 env:
   global:
   - secure: DA8FCitW3VGAv3szXyX3DvSD9dZRr6Jb217VUlEh5N6vSd2OzwiMG3zXoFUvScXTIHckWb8FMsJkI6InWAQg/ekzR5wujmuZVBZc8H55DXcUVThu0Q5kLO/xSGjlxgZQA8qrIMoJavpN2v6oIuKn634TMfVB9bx7SO4BTsOs+Hc=
