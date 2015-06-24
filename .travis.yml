@@ -1,6 +1,6 @@
 language: java
 
-install: ./gradlew assemble
+install: echo $NEXUS_USER && ./gradlew assemble
 script: ./gradlew check
 
 jdk:

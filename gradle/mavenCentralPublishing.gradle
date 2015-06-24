@@ -47,7 +47,7 @@ uploadArchives {
             }
 
             pom.project {
-                name 'smartache'
+                name 'smartcache'
 
                 packaging 'jar'
 
