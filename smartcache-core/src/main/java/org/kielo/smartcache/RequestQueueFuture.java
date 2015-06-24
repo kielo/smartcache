@@ -34,7 +34,7 @@ public class RequestQueueFuture<T> {
         this.key = key;
     }
 
-    public T resolve(int maxWaitTime) throws TimeoutException {
+    public T resolve(long maxWaitTime) throws TimeoutException {
         T value = null;
         try {
             value = future.get(maxWaitTime, TimeUnit.MILLISECONDS);
@@ -43,7 +43,9 @@ public class RequestQueueFuture<T> {
         } catch (InterruptedException interruptedException) {
             Thread.currentThread().interrupt();
         }
-        queue.remove(key);
+        finally {
+            queue.remove(key);
+        }
 
         return value;
     }

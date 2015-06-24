@@ -15,24 +15,28 @@
  */
 package org.kielo.smartcache;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public class CountingLongRunningAction implements Callable<Integer> {
 
-    private final int waitDuration;
+    private final long waitDuration;
 
     private final boolean wait;
 
+    private final List<Integer> failingIterations;
+    
     private volatile int counter = 0;
-
-    private CountingLongRunningAction(int waitDuration) {
+    
+    private CountingLongRunningAction(long waitDuration, Integer... failingIterations) {
         this.waitDuration = waitDuration;
-        this.wait = true;
+        this.wait = waitDuration > 0;
+        this.failingIterations = Arrays.asList(failingIterations);
     }
 
     private CountingLongRunningAction() {
-        this.waitDuration = 0;
-        this.wait = false;
+        this(0);
     }
 
     public static CountingLongRunningAction waiting(int waitDuration) {
@@ -43,9 +47,21 @@ public class CountingLongRunningAction implements Callable<Integer> {
         return new CountingLongRunningAction();
     }
 
+    public static CountingLongRunningAction failingOn(Integer... iterations) {
+        return new CountingLongRunningAction(0, iterations);
+    }
+
+    public static CountingLongRunningAction failImmediately() {
+        return new CountingLongRunningAction(0, 0);
+    }
+    
     @Override
     public synchronized Integer call() {
         counter++;
+        if(failingIterations.contains(counter - 1)) {
+            throw new IllegalStateException("This action wanted to fail on " + counter + " iteration");
+        }
+        
         if (wait) {
             try {
                 this.wait(waitDuration);

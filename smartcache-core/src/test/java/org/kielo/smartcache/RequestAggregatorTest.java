@@ -35,4 +35,21 @@ public class RequestAggregatorTest {
         assertThat(aggregator.contains("key")).isFalse();
     }
 
+    @Test
+    public void shouldEvaluateRequestAndRemoveItFromAggregatorEvenAfterExceptionWasThrown() throws TimeoutException {
+        // given
+        RequestAggregator aggregator = new RequestAggregator(Executors.newCachedThreadPool());
+        RequestQueueFuture<Integer> future = aggregator.aggregate("key", CountingLongRunningAction.failImmediately());
+
+        // when
+        try {
+            future.resolve(100);
+        }
+        catch(Exception exception) {
+            // noop
+        }
+
+        // then
+        assertThat(aggregator.contains("key")).isFalse();
+    }
 }

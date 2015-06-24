@@ -108,4 +108,21 @@ public class SmartCacheTest {
         // then
         assertThat(value).isEqualTo(1);
     }
+    
+    @Test
+    public void shouldNotCacheFailedResult() {
+        // given
+        SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
+        cache.registerRegion(new Region("region", new EternalExpirationPolicy(), 5, 1000));
+        CountingLongRunningAction action = CountingLongRunningAction.failingOn(0);
+
+
+        // when
+        ActionResult<Integer> failedResult = cache.get("region", "key", action);
+        ActionResult<Integer> result = cache.get("region", "key", action);
+
+        // then
+        assertThat(failedResult.caughtException()).isInstanceOf(IllegalStateException.class);
+        assertThat(result.result()).isEqualTo(2);
+    }
 }
