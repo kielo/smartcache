@@ -1,14 +1,16 @@
 package org.kielo.smartcache
 
+import org.kielo.smartcache.action.ActionResolvingException
 import spock.lang.Specification
 
 import java.util.concurrent.Executors
 
 class RequestAggregatorTest extends Specification {
 
+    private RequestAggregator aggregator = new RequestAggregator(Executors.newCachedThreadPool())
+    
     def "should evaluate request and remove it from aggregator when completed"() {
         given:
-        RequestAggregator aggregator = new RequestAggregator(Executors.newCachedThreadPool())
         RequestQueueFuture<Integer> future = aggregator.aggregate("key", CountingAction.immediate())
 
         when:
@@ -20,14 +22,13 @@ class RequestAggregatorTest extends Specification {
 
     def "should evaluate request and remove it from aggregator when exception was thrown"() {
         given:
-        RequestAggregator aggregator = new RequestAggregator(Executors.newCachedThreadPool())
         RequestQueueFuture<Integer> future = aggregator.aggregate("key", CountingAction.failImmediately())
 
         when:
-        future.resolve(100)
+        future.resolve(1000)
 
         then:
-        thrown()
+        thrown(ActionResolvingException)
         !aggregator.contains('key')
     }
 }

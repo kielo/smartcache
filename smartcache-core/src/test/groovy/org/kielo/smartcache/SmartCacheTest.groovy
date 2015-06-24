@@ -13,14 +13,48 @@ class SmartCacheTest extends Specification {
     def setup() {
         cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 1000))      
         cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5, 1000))      
+        cache.registerRegion(new Region('impatientRegion', new EternalExpirationPolicy(), 5, 20))
     }
     
-    def "should put object into cache"() {
+    def "should return value from successful action even if there is other cached"() {
+        given:
+        CountingAction action = CountingAction.immediate()
+        cache.put('region', 'key', -10)
+
         when:
-        cache.put('region', 'key', 'value')
-        
+        ActionResult result = cache.get('region', 'key', action)
+
         then:
-        cache.get('region', 'key', null) == 'value'
+        result.result() == 1
+    }
+
+    def "should return cached value on action error"() {
+        given:
+        CountingAction action = CountingAction.failImmediately()
+        cache.put('region', 'key', 100)
+        
+        when:
+        ActionResult result = cache.get('region', 'key', action)
+
+        then:
+        result.result() == 100
+        result.fromCache
+        result.failed()
+        result.caughtException() instanceof IllegalStateException
+    }
+
+    def "should return cached value on action timeout"() {
+        given:
+        CountingAction action = CountingAction.waiting(50)
+        cache.put('impatientRegion', 'key', 100)
+
+        when:
+        ActionResult result = cache.get('impatientRegion', 'key', action)
+
+        then:
+        result.result() == 100
+        result.fromCache
+        result.timeout()
     }
     
     def "should not run two request for same key at the same time"() {

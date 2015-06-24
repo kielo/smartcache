@@ -15,6 +15,8 @@
  */
 package org.kielo.smartcache.action;
 
+import java.util.concurrent.TimeoutException;
+
 public class ActionResult<T> {
 
     private final T result;
@@ -45,14 +47,10 @@ public class ActionResult<T> {
         return caughtException != null;
     }
     
-    public boolean failedWithResult() {
-        return failed() && hasResult();
+    public boolean timeout() {
+        return caughtException instanceof TimeoutException;
     }
     
-    public boolean failedWithoutResult() {
-        return failed() && !hasResult();
-    }
-
     public T result() {
         return result;
     }

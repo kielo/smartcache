@@ -41,8 +41,6 @@ subprojects {
     }
 
     test {
-        useTestNG()
-
         testLogging {
             exceptionFormat = 'full'
         }

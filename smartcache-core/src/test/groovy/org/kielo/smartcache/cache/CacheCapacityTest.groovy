@@ -20,11 +20,11 @@ class CacheCapacityTest extends Specification {
         cache.registerRegion(new Region('bounded capacity region', new EternalExpirationPolicy(), capacity, 1000))
         CountingAction action = CountingAction.immediate();
         
-        cache.put('region', 'key0', 'capacity')
-        cache.put('region', 'key1', 'replacing oldest')
+        cache.put('bounded capacity region', 'key0', 'capacity')
+        cache.put('bounded capacity region', 'key1', 'replacing oldest')
         
         when:
-        cache.get('region', 'key0', action)
+        cache.get('bounded capacity region', 'key0', action)
         
         then:
         // this means there was cache miss and action indeed was run
