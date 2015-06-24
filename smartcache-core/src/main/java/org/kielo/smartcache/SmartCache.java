@@ -16,6 +16,12 @@
 package org.kielo.smartcache;
 
 import java.util.concurrent.*;
+
+import org.kielo.smartcache.action.ActionResolvingException;
+import org.kielo.smartcache.action.ActionResult;
+import org.kielo.smartcache.cache.CacheEntry;
+import org.kielo.smartcache.cache.CacheRegions;
+import org.kielo.smartcache.cache.Region;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

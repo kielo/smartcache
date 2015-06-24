@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
+package org.kielo.smartcache.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-class CacheRegions {
+public class CacheRegions {
 
     private final Map<String, Region> regions = new ConcurrentHashMap<>();
 
-    CacheRegions() {
+    public CacheRegions() {
     }
 
-    void register(Region region) {
+    public void register(Region region) {
         regions.put(region.name(), region);
     }
 
-    Region region(String name) {
+    public Region region(String name) {
         return regions.computeIfAbsent(name, new Function<String, Region>() {
             @Override
             public Region apply(String n) {
@@ -39,7 +39,7 @@ class CacheRegions {
         });
     }
 
-    void evict() {
+    public void evict() {
         regions.values().forEach(Region::evictAll);
     }
 }

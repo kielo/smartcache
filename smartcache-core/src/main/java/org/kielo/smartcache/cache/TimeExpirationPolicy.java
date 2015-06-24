@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
+package org.kielo.smartcache.cache;
 
-public class ImmediateExpirationPolicy implements ExpirationPolicy {
+public class TimeExpirationPolicy implements ExpirationPolicy {
+
+    private final long timeToLive;
+
+    private final long timeToIdle;
+
+    public TimeExpirationPolicy(long timeToLive) {
+        this.timeToLive = timeToLive;
+        this.timeToIdle = 0;
+    }
+
+    public TimeExpirationPolicy(long timeToLive, long timeToIdle) {
+        this.timeToLive = timeToLive;
+        this.timeToIdle = timeToIdle;
+    }
 
     @Override
     public boolean expire(CacheEntry entry) {
-        return true;
+        long currentTime = System.currentTimeMillis();
+        return currentTime - entry.creationTime() > timeToLive;
     }
-
 }

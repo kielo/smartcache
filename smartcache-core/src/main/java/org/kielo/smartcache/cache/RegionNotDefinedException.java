@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.kielo.smartcache.cache;
 
-package org.kielo.smartcache;
+@SuppressWarnings("serial")
+public class RegionNotDefinedException extends RuntimeException {
 
-public interface ActionResultWeigher {
-
-    int weightOf(Object value);
+    RegionNotDefinedException(String regionName) {
+        super("Region with name " + regionName + " was not defined.\n"
+                + "Register regions via SmartCache#registerRegion() before using them.");
+    }
 
 }

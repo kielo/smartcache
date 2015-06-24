@@ -51,7 +51,7 @@ uploadArchives {
 
                 packaging 'jar'
 
-                description 'SmartCache - cache that can survive anything.'
+                description 'SmartCache - cache that can survive everything.'
                 url 'https://github.com/kielo/smartcache'
                 inceptionYear '2014'
 

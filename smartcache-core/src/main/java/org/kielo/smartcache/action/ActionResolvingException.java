@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Adam Dubiel, Przemek Hertel.
+ * Copyright 2014 Adam Dubiel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
+package org.kielo.smartcache.action;
 
-import com.googlecode.concurrentlinkedhashmap.Weigher;
 
-final class Weighers {
+@SuppressWarnings("serial")
+public class ActionResolvingException extends RuntimeException {
 
-    private Weighers() {
+    public ActionResolvingException(Throwable exception) {
+        super(exception);
     }
 
-    static Weigher<CacheEntry> from(final ActionResultWeigher weigher) {
-        if (weigher == null) {
-            return simple();
-        }
-        return value -> weigher.weightOf(value.value());
-    }
-
-    static Weigher<CacheEntry> simple() {
-        return value -> 1;
+    @Override
+    public String toString() {
+        Throwable cause = getCause();
+        return cause == null ? "Unknown (no cause)"
+                : cause.getClass().getSimpleName() + " " + cause.getMessage();
     }
 
 }

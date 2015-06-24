@@ -13,11 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.kielo.smartcache.cache;
 
-package org.kielo.smartcache;
+import com.googlecode.concurrentlinkedhashmap.Weigher;
+import org.kielo.smartcache.action.ActionResultWeigher;
 
-public interface ExpirationPolicy {
+final class Weighers {
 
-    boolean expire(CacheEntry entry);
+    private Weighers() {
+    }
+
+    static Weigher<CacheEntry> from(final ActionResultWeigher weigher) {
+        if (weigher == null) {
+            return simple();
+        }
+        return value -> weigher.weightOf(value.value());
+    }
+
+    static Weigher<CacheEntry> simple() {
+        return value -> 1;
+    }
 
 }

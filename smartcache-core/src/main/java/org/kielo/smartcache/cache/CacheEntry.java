@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
 
-public class EternalExpirationPolicy implements ExpirationPolicy {
+package org.kielo.smartcache.cache;
 
-    @Override
-    public boolean expire(CacheEntry entry) {
-        return false;
+public class CacheEntry {
+
+    private final Object value;
+
+    private final long creationTime;
+
+    CacheEntry(Object value) {
+        this.value = value;
+        this.creationTime = System.currentTimeMillis();
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T value() {
+        return (T) value;
+    }
+
+    public long creationTime() {
+        return creationTime;
+    }
 }

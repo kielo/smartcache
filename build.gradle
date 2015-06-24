@@ -15,9 +15,8 @@ allprojects {
 }
 
 subprojects {
-
     apply plugin: 'java'
-    apply plugin: 'maven'
+    apply plugin: 'groovy'
 
     apply from: project.rootProject.file('./gradle/mavenCentralPublishing.gradle')
 
@@ -37,10 +36,8 @@ subprojects {
         testCompile group: 'ch.qos.logback', name: 'logback-core', version: '1.0.13'
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'
 
-        testCompile group: 'org.testng', name: 'testng', version: '6.8.1'
-        testCompile group: 'org.mockito', name: 'mockito-all', version: '1.9.5'
-        testCompile group: 'org.assertj', name: 'assertj-core', version: '1.6.1'
-        testCompile group: 'com.googlecode.catch-exception', name: 'catch-exception', version: '1.2.0'
+        testCompile group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.4'
+        testCompile group: 'com.jayway.awaitility', name: 'awaitility', version: '1.6.3'
     }
 
     test {
@@ -53,5 +50,5 @@ subprojects {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
+    gradleVersion = '2.3'
 }

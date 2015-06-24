@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Adam Dubiel.
+ * Copyright 2014 Adam Dubiel, Przemek Hertel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
 
+package org.kielo.smartcache.cache;
 
-@SuppressWarnings("serial")
-public class ActionResolvingException extends RuntimeException {
+public interface ExpirationPolicy {
 
-    ActionResolvingException(Throwable exception) {
-        super(exception);
-    }
-
-    @Override
-    public String toString() {
-        Throwable cause = getCause();
-        return cause == null ? "Unknown (no cause)"
-                : cause.getClass().getSimpleName() + " " + cause.getMessage();
-    }
+    boolean expire(CacheEntry entry);
 
 }

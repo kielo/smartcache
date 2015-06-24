@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
+package org.kielo.smartcache.cache;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import org.kielo.smartcache.action.ActionResultWeigher;
+
 import java.util.concurrent.ConcurrentMap;
 
 public class Region {
@@ -61,19 +63,19 @@ public class Region {
         return timeout;
     }
 
-    void put(String key, Object object) {
+    public void put(String key, Object object) {
         cache.put(key, new CacheEntry(object));
     }
 
-    CacheEntry get(String key) {
+    public CacheEntry get(String key) {
         return cache.get(key);
     }
 
-    void evict(String key) {
+    public void evict(String key) {
         cache.remove(key);
     }
 
-    void evictAll() {
+    public void evictAll() {
         cache.clear();
     }
 }

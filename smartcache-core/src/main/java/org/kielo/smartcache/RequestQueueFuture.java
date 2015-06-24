@@ -15,6 +15,8 @@
  */
 package org.kielo.smartcache;
 
+import org.kielo.smartcache.action.ActionResolvingException;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

@@ -14,25 +14,10 @@
  * limitations under the License.
  */
 
-package org.kielo.smartcache;
+package org.kielo.smartcache.action;
 
-public class CacheEntry {
+public interface ActionResultWeigher {
 
-    private final Object value;
+    int weightOf(Object value);
 
-    private final long creationTime;
-
-    CacheEntry(Object value) {
-        this.value = value;
-        this.creationTime = System.currentTimeMillis();
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T value() {
-        return (T) value;
-    }
-
-    public long creationTime() {
-        return creationTime;
-    }
 }
