@@ -4,15 +4,17 @@ import org.kielo.smartcache.action.ActionResult
 import org.kielo.smartcache.cache.Region
 import spock.lang.Specification
 
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class SmartCacheTest extends Specification {
 
     private SmartCache cache = new SmartCache(Executors.newCachedThreadPool())
 
     def setup() {
-        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 1000))      
-        cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5, 1000))      
+        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 10000))
+        cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5, 1000))
         cache.registerRegion(new Region('impatientRegion', new EternalExpirationPolicy(), 5, 20))
     }
     
@@ -59,24 +61,13 @@ class SmartCacheTest extends Specification {
     
     def "should not run two request for same key at the same time"() {
         given:
-        CountingAction action = CountingAction.waiting(50)
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountingAction action = CountingAction.waiting(100)
         
         when:
-        cache.get('region', 'key', action)
-        cache.get('region', 'key', action)
-        
-        then:
-        action.counter == 1
-    }
-    
-    def "should not refresh cache when fresh key is already there"() {
-        given:
-        CountingAction action = CountingAction.immediate()
-        
-        when:
-        cache.get('region', 'key', action)
-        cache.get('region', 'key', action)
-        
+        executor.submit({ cache.get('region', 'key', action) })
+        executor.submit({ cache.get('region', 'key', action) }).get()
+
         then:
         action.counter == 1
     }
@@ -116,18 +107,4 @@ class SmartCacheTest extends Specification {
         failedResult.caughtException() instanceof IllegalStateException
         result.result() == 2
     }
-
-    def "should indicate if action was cache hit"() {
-        given:
-        CountingAction action = CountingAction.immediate()
-        
-        when:
-        ActionResult first = cache.get('region', 'key', action)
-        ActionResult second = cache.get('region', 'key', action)
-        
-        then:
-        !first.isFromCache()
-        second.isFromCache()
-    }
-
 }

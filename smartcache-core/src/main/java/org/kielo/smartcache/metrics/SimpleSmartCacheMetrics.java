@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
 
-    private AtomicInteger cacheHits = new AtomicInteger();
+    private AtomicInteger cacheQueried = new AtomicInteger();
 
-    private AtomicInteger cacheMisses = new AtomicInteger();
+    private AtomicInteger cacheHits = new AtomicInteger();
 
     private AtomicLong totalResolutionTime = new AtomicLong();
 
@@ -16,21 +16,21 @@ public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
     private AtomicInteger errors = new AtomicInteger();
 
     @Override
+    public void cacheQueried(String region, String key) {
+        cacheQueried.incrementAndGet();
+    }
+
+    public int getCacheQueried() {
+        return cacheQueried.get();
+    }
+
+    @Override
     public void cacheHit(String region, String key) {
         cacheHits.incrementAndGet();
     }
 
     public int getCacheHits() {
         return cacheHits.get();
-    }
-
-    @Override
-    public void cacheMiss(String region, String key) {
-        cacheMisses.incrementAndGet();
-    }
-
-    public int getCacheMisses() {
-        return cacheMisses.get();
     }
 
     @Override

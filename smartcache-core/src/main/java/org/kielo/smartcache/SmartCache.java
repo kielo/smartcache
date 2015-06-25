@@ -15,10 +15,10 @@
  */
 package org.kielo.smartcache;
 
-import java.util.concurrent.*;
-
 import org.kielo.smartcache.action.ActionResolvingException;
 import org.kielo.smartcache.action.ActionResult;
+import org.kielo.smartcache.aggregator.RequestAggregator;
+import org.kielo.smartcache.aggregator.RequestQueueFuture;
 import org.kielo.smartcache.cache.CacheEntry;
 import org.kielo.smartcache.cache.CacheRegions;
 import org.kielo.smartcache.cache.Region;
@@ -26,6 +26,10 @@ import org.kielo.smartcache.metrics.NoopSmartCacheMetrics;
 import org.kielo.smartcache.metrics.SmartCacheMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
 
 public class SmartCache {
 
@@ -36,7 +40,7 @@ public class SmartCache {
     private final RequestAggregator requestQueue;
 
     private final SmartCacheMetrics metrics;
-    
+
     public SmartCache(ExecutorService executorService, SmartCacheMetrics metrics) {
         requestQueue = new RequestAggregator(executorService);
         this.metrics = metrics;
@@ -65,45 +69,40 @@ public class SmartCache {
     @SuppressWarnings("unchecked")
     public <T> ActionResult<T> get(String regionName, String key, final Callable<T> action) {
         Region region = regions.region(regionName);
-        CacheEntry entry = region.get(key);
 
         T value = null;
         Throwable caughtException = null;
-        boolean fromCache = entry != null;
 
-        if (entry == null || region.expirationPolicy().expire(entry)) {
-            metrics.cacheMiss(regionName, key);
-            Object context = metrics.actionResolutionStarted(regionName, key);
-            try {
-                value = put(regionName, key, action).resolve(region.timeout());
-            } catch (TimeoutException timeoutException) {
-                logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
-                caughtException = timeoutException;
-                metrics.actionTimeout(regionName, key);
-            } catch (ActionResolvingException actionException) {
-                logger.info("Action failed, returning cached value with exception: {}", actionException.toString());
-                caughtException = actionException.getCause();
-                metrics.actionError(regionName, key);
-            } catch (Exception exception) {
-                logger.info("Action failed, returning cached value with exception: {} {}", exception.getClass().getSimpleName(), exception.getMessage());
-                caughtException = exception;
-                metrics.actionError(regionName, key);
+        Object context = metrics.actionResolutionStarted(regionName, key);
+        try {
+            value = put(regionName, key, action).resolve(region.timeout());
+        } catch (TimeoutException timeoutException) {
+            logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
+            caughtException = timeoutException;
+            metrics.actionTimeout(regionName, key);
+        } catch (ActionResolvingException actionException) {
+            logger.info("Action failed, returning cached value with exception: {}", actionException.toString());
+            caughtException = actionException.getCause();
+            metrics.actionError(regionName, key);
+        } catch (Exception exception) {
+            logger.info("Action failed, returning cached value with exception: {} {}", exception.getClass().getSimpleName(), exception.getMessage());
+            caughtException = exception;
+            metrics.actionError(regionName, key);
+        } finally {
+            metrics.actionResolutionFinished(regionName, key, context);
+        }
+
+        boolean failed = caughtException != null;
+        if(failed) {
+            CacheEntry entry = region.get(key);
+            metrics.cacheQueried(regionName, key);
+            if(entry != null && !region.expirationPolicy().expire(entry)) {
+                metrics.cacheHit(regionName, key);
+                value = entry.value();
             }
-            finally {
-                metrics.actionResolutionFinished(regionName, key, context);
-            }
-            
-            fromCache = value == null;
         }
-        else {
-            metrics.cacheHit(regionName, key);
-        }
-
-        if (entry != null && value == null) {
-            value = entry.value();
-        }
-
-        return new ActionResult<>(value, caughtException, fromCache);
+        
+        return new ActionResult<>(value, caughtException, failed);
     }
 
     public void evict(String regionName, String key) {
@@ -117,7 +116,7 @@ public class SmartCache {
     public void evict() {
         regions.evict();
     }
-    
+
     @SuppressWarnings("unchecked")
     public <T extends SmartCacheMetrics> T metrics() {
         return (T) metrics;

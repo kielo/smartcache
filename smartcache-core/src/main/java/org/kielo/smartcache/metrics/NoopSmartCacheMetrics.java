@@ -3,12 +3,12 @@ package org.kielo.smartcache.metrics;
 public class NoopSmartCacheMetrics implements SmartCacheMetrics {
 
     @Override
-    public void cacheHit(String region, String key) {
+    public void cacheQueried(String region, String key) {
         // noop
     }
 
     @Override
-    public void cacheMiss(String region, String key) {
+    public void cacheHit(String region, String key) {
         // noop
     }
 

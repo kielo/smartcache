@@ -19,17 +19,30 @@ class MetricsTest extends Specification {
         cache.registerRegion(new Region('impatientRegion', new EternalExpirationPolicy(), 5, 20))
     }
 
-    def "should trigger metric action on cache hit and cache miss"() {
+    def "should trigger metric action when cache was queried"() {
         given:
-        CountingAction action = CountingAction.immediate()
+        CountingAction action = CountingAction.failImmediately()
 
         when:
         cache.get('region', 'key', action)
+
+        then:
+        metrics.cacheQueried == 1
+        metrics.cacheHits == 0
+    }
+    
+    def "should trigger metric action when cache was queried and hit was found"() {
+        given:
+        CountingAction action = CountingAction.failImmediately()
+        cache.put('region', 'key', -1)
+
+        when:
         cache.get('region', 'key', action)
 
         then:
+        metrics.cacheQueried == 1
         metrics.cacheHits == 1
-        metrics.cacheMisses == 1
+        
     }
 
     def "should trigger metric action to measure execution time"() {
@@ -54,7 +67,6 @@ class MetricsTest extends Specification {
 
         then:
         metrics.timeouts == 1
-        metrics.cacheMisses == 1
     }
     
     def "should trigger metric action on exception"() {
@@ -66,6 +78,5 @@ class MetricsTest extends Specification {
         
         then:
         metrics.errors == 1
-        metrics.cacheMisses == 1
     }
 }

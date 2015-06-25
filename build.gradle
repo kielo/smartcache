@@ -42,6 +42,7 @@ subprojects {
 
     test {
         testLogging {
+            showStandardStreams = true
             exceptionFormat = 'full'
         }
     }

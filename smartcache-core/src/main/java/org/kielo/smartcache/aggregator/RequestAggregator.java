@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kielo.smartcache;
+package org.kielo.smartcache.aggregator;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,23 +21,26 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-class RequestAggregator {
+public class RequestAggregator {
 
     private final ConcurrentMap<String, Future<?>> aggregator = new ConcurrentHashMap<>();
 
     private final ExecutorService executor;
 
-    RequestAggregator(ExecutorService executor) {
+    public RequestAggregator(ExecutorService executor) {
         this.executor = executor;
     }
 
-    <T> RequestQueueFuture<T> aggregate(String key, final Callable<T> action) {
+    public <T> RequestQueueFuture<T> aggregate(String key, final Callable<T> action) {
         return putAndSchedule(key, action);
     }
 
     @SuppressWarnings("unchecked")
     private <T> RequestQueueFuture<T> putAndSchedule(String key, final Callable<T> action) {
-        Future<T> future = (Future<T>) aggregator.computeIfAbsent(key, s -> executor.submit(action));
+        Future<T> future = (Future<T>) aggregator.computeIfAbsent(key, s -> {
+            return executor.submit(action);
+            
+        });
         return new RequestQueueFuture<>(this, future, key);
     }
 
