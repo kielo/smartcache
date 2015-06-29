@@ -15,10 +15,10 @@ class SmartCacheTest extends Specification {
     def setup() {
         cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 10000))
         cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5, 1000))
-        cache.registerRegion(new Region('impatientRegion', new EternalExpirationPolicy(), 5, 20))
+        cache.registerRegion(new Region('impatientRegion', new ImmediateExpirationPolicy(), 5, 20))
     }
     
-    def "should return value from successful action even if there is other cached"() {
+    def "should return value from cache if not expire"() {
         given:
         CountingAction action = CountingAction.immediate()
         cache.put('region', 'key', -10)
@@ -27,16 +27,17 @@ class SmartCacheTest extends Specification {
         ActionResult result = cache.get('region', 'key', action)
 
         then:
-        result.result() == 1
+        result.result() == -10
     }
 
-    def "should return cached value on action error"() {
+    def "should return stale cached value on action error"() {
         given:
         CountingAction action = CountingAction.failImmediately()
-        cache.put('region', 'key', 100)
+        cache.put('immediateRegion', 'key', 100)
+        sleep(10)
         
         when:
-        ActionResult result = cache.get('region', 'key', action)
+        ActionResult result = cache.get('immediateRegion', 'key', action)
 
         then:
         result.result() == 100
@@ -45,10 +46,11 @@ class SmartCacheTest extends Specification {
         result.caughtException() instanceof IllegalStateException
     }
 
-    def "should return cached value on action timeout"() {
+    def "should return stale cached value on action timeout"() {
         given:
         CountingAction action = CountingAction.waiting(50)
         cache.put('impatientRegion', 'key', 100)
+        sleep(10)
 
         when:
         ActionResult result = cache.get('impatientRegion', 'key', action)

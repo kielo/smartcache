@@ -27,7 +27,7 @@ class MetricsTest extends Specification {
         cache.get('region', 'key', action)
 
         then:
-        metrics.cacheQueried == 1
+        metrics.actionExecuted == 1
         metrics.cacheHits == 0
     }
     
@@ -40,7 +40,7 @@ class MetricsTest extends Specification {
         cache.get('region', 'key', action)
 
         then:
-        metrics.cacheQueried == 1
+        metrics.actionExecuted == 0
         metrics.cacheHits == 1
         
     }
