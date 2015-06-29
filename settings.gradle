@@ -1,3 +1,4 @@
 rootProject.name = 'smartcache'
 
 include 'smartcache-core'
+include 'smartcache-spring'
