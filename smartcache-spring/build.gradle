@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':smartcache-core')
+
+    compile group: 'org.springframework', name: 'spring-context', version: '4.1.6.RELEASE'
+    compile group: 'org.aspectj', name: 'aspectjweaver', version: '1.8.5'
+
+    testCompile group: 'org.springframework', name: 'spring-test', version: '4.1.6.RELEASE'
+    testCompile group: 'org.spockframework', name: 'spock-spring', version: '1.0-groovy-2.4'
+}
