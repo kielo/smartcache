@@ -7,6 +7,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.kielo.smartcache.SmartCache;
 import org.kielo.smartcache.action.ActionResult;
+import org.kielo.smartcache.metrics.MetricsMetadata;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -30,7 +31,9 @@ public class SmartCacheAspect {
         String region = annotation.region();
         String key = createKey(pjp);
 
-        ActionResult<Object> result = smartCache.get(region, key, () -> callOriginalMethod(pjp));
+        MetricsMetadata metricsMetadata = new MetricsMetadata(annotation.metricsPrefix());
+        
+        ActionResult<Object> result = smartCache.get(region, key, metricsMetadata, () -> callOriginalMethod(pjp));
 
         if (result.failedWithoutCacheHit()) {
             throw result.caughtException();

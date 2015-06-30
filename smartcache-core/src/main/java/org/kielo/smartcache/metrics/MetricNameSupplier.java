@@ -3,6 +3,6 @@ package org.kielo.smartcache.metrics;
 @FunctionalInterface
 public interface MetricNameSupplier {
 
-    String nameFor(MeteredEventType event, String region, String key);
+    String nameFor(MeteredEventType event, String region, String key, MetricsMetadata metricsMetadata);
 
 }

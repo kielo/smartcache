@@ -3,7 +3,7 @@ package org.kielo.smartcache.metrics;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
+public class SimpleCacheMetrics implements CacheMetrics {
 
     private AtomicInteger actionExecuted = new AtomicInteger();
 
@@ -22,17 +22,17 @@ public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
     }
 
     @Override
-    public void cacheHit(String region, String key) {
+    public void cacheHit(String region, String key, MetricsMetadata metricsMetadata) {
         cacheHits.incrementAndGet();
     }
 
     @Override
-    public void staleCacheHit(String region, String key) {
+    public void staleCacheHit(String region, String key, MetricsMetadata metricsMetadata) {
         staleCacheHit.incrementAndGet();
     }
 
     @Override
-    public void actionExecuted(String region, String key) {
+    public void actionExecuted(String region, String key, MetricsMetadata metricsMetadata) {
         actionExecuted.incrementAndGet();
     }
 
@@ -41,13 +41,13 @@ public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
     }
 
     @Override
-    public Object actionResolutionStarted(String region, String key) {
+    public Object actionResolutionStarted(String region, String key, MetricsMetadata metricsMetadata) {
         return System.currentTimeMillis();
     }
 
 
     @Override
-    public void actionResolutionFinished(String region, String key, Object context) {
+    public void actionResolutionFinished(String region, String key, MetricsMetadata metricsMetadata, Object context) {
         totalResolutionTime.addAndGet((long) context);
     }
 
@@ -56,7 +56,7 @@ public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
     }
 
     @Override
-    public void actionTimeout(String region, String key) {
+    public void actionTimeout(String region, String key, MetricsMetadata metricsMetadata) {
         timeouts.incrementAndGet();
     }
 
@@ -65,7 +65,7 @@ public class SimpleSmartCacheMetrics implements SmartCacheMetrics {
     }
 
     @Override
-    public void actionError(String region, String key) {
+    public void actionError(String region, String key, MetricsMetadata metricsMetadata) {
         errors.incrementAndGet();
     }
 

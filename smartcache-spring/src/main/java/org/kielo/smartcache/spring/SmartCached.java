@@ -11,4 +11,5 @@ public @interface SmartCached {
     
     String region();
     
+    String metricsPrefix();
 }

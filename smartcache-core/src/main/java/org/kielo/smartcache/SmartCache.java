@@ -22,8 +22,9 @@ import org.kielo.smartcache.aggregator.RequestQueueFuture;
 import org.kielo.smartcache.cache.CacheEntry;
 import org.kielo.smartcache.cache.CacheRegions;
 import org.kielo.smartcache.cache.Region;
-import org.kielo.smartcache.metrics.NoopSmartCacheMetrics;
-import org.kielo.smartcache.metrics.SmartCacheMetrics;
+import org.kielo.smartcache.metrics.MetricsMetadata;
+import org.kielo.smartcache.metrics.NoopCacheMetrics;
+import org.kielo.smartcache.metrics.CacheMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,15 +40,15 @@ public class SmartCache {
 
     private final RequestAggregator requestQueue;
 
-    private final SmartCacheMetrics metrics;
+    private final CacheMetrics metrics;
 
-    public SmartCache(ExecutorService executorService, SmartCacheMetrics metrics) {
+    public SmartCache(ExecutorService executorService, CacheMetrics metrics) {
         requestQueue = new RequestAggregator(executorService);
         this.metrics = metrics;
     }
 
     public SmartCache(ExecutorService executorService) {
-        this(executorService, new NoopSmartCacheMetrics());
+        this(executorService, new NoopCacheMetrics());
     }
 
     public void registerRegion(Region region) {
@@ -67,7 +68,7 @@ public class SmartCache {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> ActionResult<T> get(String regionName, String key, final Callable<T> action) {
+    public <T> ActionResult<T> get(String regionName, String key, MetricsMetadata metricsMetadata, final Callable<T> action) {
         Region region = regions.region(regionName);
         CacheEntry entry = region.get(key);
 
@@ -76,34 +77,34 @@ public class SmartCache {
         boolean valueFromCache = entry != null;
         
         if (!valueFromCache || region.expirationPolicy().expire(entry)) {
-            Object context = metrics.actionResolutionStarted(regionName, key);
+            Object timerContext = metrics.actionResolutionStarted(regionName, key, metricsMetadata);
             try {
-                metrics.actionExecuted(regionName, key);
+                metrics.actionExecuted(regionName, key, metricsMetadata);
                 value = put(regionName, key, action).resolve(region.timeout());
                 valueFromCache = false;
             } catch(TimeoutException timeoutException) {
                 logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
                 caughtException = timeoutException;
-                metrics.actionTimeout(regionName, key);
+                metrics.actionTimeout(regionName, key, metricsMetadata);
             } catch(ActionResolvingException actionException) {
                 logger.info("Action failed, returning cached value with exception: {}", actionException.toString());
                 caughtException = actionException.getCause();
-                metrics.actionError(regionName, key);
+                metrics.actionError(regionName, key, metricsMetadata);
             } catch(Exception exception) {
                 logger.info("Action failed, returning cached value with exception: {} {}", exception.getClass().getSimpleName(), exception.getMessage());
                 caughtException = exception;
-                metrics.actionError(regionName, key);
+                metrics.actionError(regionName, key, metricsMetadata);
             } finally {
-                metrics.actionResolutionFinished(regionName, key, context);
+                metrics.actionResolutionFinished(regionName, key, metricsMetadata, timerContext);
             }
         } else {
             value = entry.value();
-            metrics.cacheHit(regionName, key);
+            metrics.cacheHit(regionName, key, metricsMetadata);
         }
         
         if (valueFromCache && caughtException != null) {
             value = entry.value();
-            metrics.staleCacheHit(regionName, key);
+            metrics.staleCacheHit(regionName, key, metricsMetadata);
         }
         
         return new ActionResult<>(value, caughtException, valueFromCache);
@@ -122,7 +123,7 @@ public class SmartCache {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends SmartCacheMetrics> T metrics() {
+    public <T extends CacheMetrics> T metrics() {
         return (T) metrics;
     }
 }

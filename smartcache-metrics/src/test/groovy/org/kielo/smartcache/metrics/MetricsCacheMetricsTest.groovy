@@ -3,13 +3,13 @@ package org.kielo.smartcache.metrics
 import com.codahale.metrics.MetricRegistry
 import spock.lang.Specification
 
-class MetricsSmartCacheMetricsTest extends Specification {
+class MetricsCacheMetricsTest extends Specification {
     
     private MetricRegistry registry = new MetricRegistry()
     
     private MetricNameSupplier nameSupplier = { event, region, key -> (String) "$event-$region-$key" }
     
-    private MetricsSmartCacheMetrics metrics = new MetricsSmartCacheMetrics(registry, nameSupplier)
+    private MetricsCacheMetrics metrics = new MetricsCacheMetrics(registry, nameSupplier)
     
     def "should measure cache hits"() {
         when:

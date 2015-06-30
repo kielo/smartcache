@@ -2,7 +2,7 @@ package org.kielo.smartcache
 
 import com.jayway.awaitility.Awaitility
 import org.kielo.smartcache.cache.Region
-import org.kielo.smartcache.metrics.SimpleSmartCacheMetrics
+import org.kielo.smartcache.metrics.SimpleCacheMetrics
 import spock.lang.Specification
 
 import java.util.concurrent.Executors
@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class MetricsTest extends Specification {
 
-    private SimpleSmartCacheMetrics metrics = new SimpleSmartCacheMetrics()
+    private SimpleCacheMetrics metrics = new SimpleCacheMetrics()
 
     private SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), metrics)
 
