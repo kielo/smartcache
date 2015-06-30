@@ -46,6 +46,10 @@ public class ActionResult<T> {
     public boolean failed() {
         return caughtException != null;
     }
+
+    public boolean failedWithoutCacheHit() {
+        return !hasResult() && failed();
+    }
     
     public boolean timeout() {
         return caughtException instanceof TimeoutException;
@@ -61,5 +65,9 @@ public class ActionResult<T> {
 
     public boolean isFromCache() {
         return fromCache;
+    }
+    
+    public boolean isFromStaleCache() {
+        return hasResult() && isFromCache() && failed();
     }
 }

@@ -30,7 +30,6 @@ subprojects {
 
     dependencies {
         compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.7'
-        compile group: 'org.picocontainer', name: 'picocontainer', version: '2.14.3'
         compile group: 'com.googlecode.concurrentlinkedhashmap', name: 'concurrentlinkedhashmap-lru', version: '1.4'
 
         testCompile group: 'ch.qos.logback', name: 'logback-core', version: '1.0.13'
