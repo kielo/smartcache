@@ -12,9 +12,8 @@ class SmartCacheTest extends Specification {
     private SmartCache cache = new SmartCache(Executors.newCachedThreadPool())
 
     def setup() {
-        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 10000))
-        cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5, 1000))
-        cache.registerRegion(new Region('impatientRegion', new ImmediateExpirationPolicy(), 5, 20))
+        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5))
+        cache.registerRegion(new Region('immediateRegion', new ImmediateExpirationPolicy(), 5))
     }
 
     def "should return value from resolved action"() {
@@ -22,7 +21,7 @@ class SmartCacheTest extends Specification {
         CountingAction action = CountingAction.immediate()
 
         when:
-        int value = cache.get('region', 'key', action).result()
+        int value = cache.get('key', Integer).fromRegion('region').invoke(action).result()
 
         then:
         value == 1
@@ -34,7 +33,7 @@ class SmartCacheTest extends Specification {
         cache.put('region', 'key', -10)
 
         when:
-        ActionResult result = cache.get('region', 'key', action)
+        ActionResult result =  cache.get('key').fromRegion('region').invoke(action)
 
         then:
         result.result() == -10
@@ -45,8 +44,8 @@ class SmartCacheTest extends Specification {
         CountingAction action = CountingAction.immediate()
 
         when:
-        cache.get('immediateRegion', 'key', action)
-        cache.get('immediateRegion', 'key', action)
+        cache.get('key').fromRegion('immediateRegion').invoke(action)
+        cache.get('key').fromRegion('immediateRegion').invoke(action)
 
         then:
         action.counter == 2
@@ -57,8 +56,8 @@ class SmartCacheTest extends Specification {
         CountingAction action = CountingAction.failingOn(0)
 
         when:
-        ActionResult failedResult = cache.get('region', 'key', action)
-        ActionResult result = cache.get('region', 'key', action)
+        ActionResult failedResult = cache.get('key').fromRegion('region').invoke(action)
+        ActionResult result = cache.get('key').fromRegion('region').invoke(action)
 
         then:
         failedResult.caughtException() instanceof IllegalStateException
@@ -72,7 +71,7 @@ class SmartCacheTest extends Specification {
         sleep(10)
 
         when:
-        ActionResult result = cache.get('immediateRegion', 'key', action)
+        ActionResult result = cache.get('key').fromRegion('immediateRegion').invoke(action)
 
         then:
         result.result() == 100
@@ -82,11 +81,11 @@ class SmartCacheTest extends Specification {
     def "should return stale cached value on action timeout"() {
         given:
         CountingAction action = CountingAction.waiting(50)
-        cache.put('impatientRegion', 'key', 100)
+        cache.put('immediateRegion', 'key', 100)
         sleep(10)
 
         when:
-        ActionResult result = cache.get('impatientRegion', 'key', action)
+        ActionResult result = cache.get('key').fromRegion('immediateRegion').withTimeout(20).invoke(action)
 
         then:
         result.result() == 100
@@ -100,8 +99,8 @@ class SmartCacheTest extends Specification {
         CountingAction action = CountingAction.waiting(100)
 
         when:
-        executor.submit({ cache.get('region', 'key', action) })
-        executor.submit({ cache.get('region', 'key', action) }).get()
+        executor.submit({ cache.get('key').fromRegion('region').invoke(action) })
+        executor.submit({ cache.get('key').fromRegion('region').invoke(action) }).get()
 
         then:
         action.counter == 1
@@ -112,7 +111,7 @@ class SmartCacheTest extends Specification {
         CountingAction action = CountingAction.failImmediately()
 
         when:
-        ActionResult result = cache.get('region', 'key', action)
+        ActionResult result = cache.get('key').fromRegion('region').invoke(action)
 
         then:
         !result.result()

@@ -11,20 +11,17 @@ class CacheCapacityTest extends Specification {
 
     private SmartCache cache = new SmartCache(Executors.newCachedThreadPool())
     
-    def setup() {
-    }
-    
     def "should not exceed given capacity"() {
         given:
         int capacity = 1
-        cache.registerRegion(new Region('bounded capacity region', new EternalExpirationPolicy(), capacity, 1000))
+        cache.registerRegion(new Region('bounded capacity region', new EternalExpirationPolicy(), capacity))
         CountingAction action = CountingAction.immediate();
         
         cache.put('bounded capacity region', 'key0', 'capacity')
         cache.put('bounded capacity region', 'key1', 'replacing oldest')
         
         when:
-        cache.get('bounded capacity region', 'key0', action)
+        cache.get('key0').fromRegion('bounded capacity region').invoke(action)
         
         then:
         // this means there was cache miss and action indeed was run

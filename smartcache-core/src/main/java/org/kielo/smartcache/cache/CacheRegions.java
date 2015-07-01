@@ -17,7 +17,6 @@ package org.kielo.smartcache.cache;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 
 public class CacheRegions {
 
@@ -31,11 +30,8 @@ public class CacheRegions {
     }
 
     public Region region(String name) {
-        return regions.computeIfAbsent(name, new Function<String, Region>() {
-            @Override
-            public Region apply(String n) {
-                throw new RegionNotDefinedException(n);
-            }
+        return regions.computeIfAbsent(name, n -> {
+            throw new RegionNotDefinedException(n);
         });
     }
 

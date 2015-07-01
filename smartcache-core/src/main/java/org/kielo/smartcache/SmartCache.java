@@ -22,12 +22,14 @@ import org.kielo.smartcache.aggregator.RequestQueueFuture;
 import org.kielo.smartcache.cache.CacheEntry;
 import org.kielo.smartcache.cache.CacheRegions;
 import org.kielo.smartcache.cache.Region;
+import org.kielo.smartcache.cache.TimeExpirationPolicy;
 import org.kielo.smartcache.metrics.MetricsMetadata;
 import org.kielo.smartcache.metrics.NoopCacheMetrics;
 import org.kielo.smartcache.metrics.CacheMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
@@ -36,6 +38,8 @@ public class SmartCache {
 
     private final static Logger logger = LoggerFactory.getLogger(SmartCache.class);
 
+    private static final String DEFAULT_REGION_NAME = "default";
+    
     private final CacheRegions regions = new CacheRegions();
 
     private final RequestAggregator requestQueue;
@@ -45,12 +49,14 @@ public class SmartCache {
     public SmartCache(ExecutorService executorService, CacheMetrics metrics) {
         requestQueue = new RequestAggregator(executorService);
         this.metrics = metrics;
+        
+        this.regions.register(new Region(DEFAULT_REGION_NAME, new TimeExpirationPolicy(1000), 10_000));
     }
 
     public SmartCache(ExecutorService executorService) {
         this(executorService, new NoopCacheMetrics());
     }
-
+    
     public void registerRegion(Region region) {
         regions.register(region);
     }
@@ -67,8 +73,16 @@ public class SmartCache {
         });
     }
 
+    public <T> InvocationBuilder<T> get(String key, Class<T> classMarker) {
+        return new InvocationBuilder<>(this, key);
+    }
+
+    public <T> InvocationBuilder<T> get(String key) {
+        return new InvocationBuilder<>(this, key);
+    }
+    
     @SuppressWarnings("unchecked")
-    public <T> ActionResult<T> get(String regionName, String key, MetricsMetadata metricsMetadata, final Callable<T> action) {
+    private <T> ActionResult<T> get(String regionName, String key, MetricsMetadata metricsMetadata, Duration timeout, Callable<T> action) {
         Region region = regions.region(regionName);
         CacheEntry entry = region.get(key);
 
@@ -80,10 +94,10 @@ public class SmartCache {
             Object timerContext = metrics.actionResolutionStarted(regionName, key, metricsMetadata);
             try {
                 metrics.actionExecuted(regionName, key, metricsMetadata);
-                value = put(regionName, key, action).resolve(region.timeout());
+                value = put(regionName, key, action).resolve(timeout);
                 valueFromCache = false;
             } catch(TimeoutException timeoutException) {
-                logger.info("Action timed out after {} milliseconds, returning cached value.", region.timeout());
+                logger.info("Action timed out after {} milliseconds, returning cached value.", timeout.toMillis());
                 caughtException = timeoutException;
                 metrics.actionTimeout(regionName, key, metricsMetadata);
             } catch(ActionResolvingException actionException) {
@@ -125,5 +139,47 @@ public class SmartCache {
     @SuppressWarnings("unchecked")
     public <T extends CacheMetrics> T metrics() {
         return (T) metrics;
+    }
+    
+    public class InvocationBuilder<T> {
+        
+        private final SmartCache smartCache;
+        
+        private final String key;
+        
+        private String region = DEFAULT_REGION_NAME;
+        
+        private MetricsMetadata metricsMetadata; 
+                
+        private Duration timeout = Duration.ofMillis(1000);
+
+        private InvocationBuilder(SmartCache smartCache, String key) {
+            this.smartCache = smartCache;
+            this.key = key;
+        }
+        
+        public ActionResult<T> invoke(Callable<T> action) {
+            return smartCache.get(region, key, metricsMetadata, timeout, action);
+        }
+        
+        public InvocationBuilder<T> fromRegion(String region) {
+            this.region = region;
+            return this;
+        }
+
+        public InvocationBuilder<T> withMetricsMetadata(MetricsMetadata metricsMetadata) {
+            this.metricsMetadata = metricsMetadata;
+            return this;
+        }
+        
+        public InvocationBuilder<T> withTimeout(Duration timeout) {
+            this.timeout = timeout;
+            return this;
+        }
+
+        public InvocationBuilder<T> withTimeout(long millis) {
+            this.timeout = Duration.ofMillis(millis);
+            return this;
+        }
     }
 }

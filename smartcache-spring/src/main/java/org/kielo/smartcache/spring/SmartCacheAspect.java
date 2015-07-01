@@ -28,12 +28,15 @@ public class SmartCacheAspect {
     public Object execute(ProceedingJoinPoint pjp) throws Throwable {
 
         SmartCached annotation = extractMethod(pjp).getAnnotation(SmartCached.class);
-        String region = annotation.region();
         String key = createKey(pjp);
 
         MetricsMetadata metricsMetadata = new MetricsMetadata(annotation.metricsPrefix());
-        
-        ActionResult<Object> result = smartCache.get(region, key, metricsMetadata, () -> callOriginalMethod(pjp));
+
+        ActionResult<Object> result = smartCache.get(key)
+                .fromRegion(annotation.region())
+                .withTimeout(annotation.timeout())
+                .withMetricsMetadata(metricsMetadata)
+                .invoke(() -> callOriginalMethod(pjp));
 
         if (result.failedWithoutCacheHit()) {
             throw result.caughtException();

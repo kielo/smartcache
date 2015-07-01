@@ -30,12 +30,9 @@ public class Region {
 
     private final ExpirationPolicy expirationPolicy;
 
-    private final int timeout;
-
-    public Region(String name, ExpirationPolicy expirationPolicy, final ActionResultWeigher weigher, int capacity, int actionTimeout) {
+    public Region(String name, ExpirationPolicy expirationPolicy, final ActionResultWeigher weigher, int capacity) {
         this.name = name;
         this.expirationPolicy = expirationPolicy;
-        this.timeout = actionTimeout;
 
         this.cache = new ConcurrentLinkedHashMap.Builder<String, CacheEntry>()
                 .weigher(Weighers.from(weigher))
@@ -43,8 +40,8 @@ public class Region {
                 .build();
     }
 
-    public Region(String name, ExpirationPolicy expirationPolicy, int capacity, int timeout) {
-        this(name, expirationPolicy, null, capacity, timeout);
+    public Region(String name, ExpirationPolicy expirationPolicy, int capacity) {
+        this(name, expirationPolicy, null, capacity);
     }
 
     public static String key(String regionName, String key) {
@@ -57,10 +54,6 @@ public class Region {
 
     public ExpirationPolicy expirationPolicy() {
         return expirationPolicy;
-    }
-
-    public int timeout() {
-        return timeout;
     }
 
     public void put(String key, Object object) {

@@ -18,8 +18,8 @@ class TestApplication {
     @Bean
     public SmartCache smartCache() {
         SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), new SimpleCacheMetrics())
-        cache.registerRegion(new Region("standardCache", new TimeExpirationPolicy(1000), 50_000, 3_000))
-        cache.registerRegion(new Region("impatientCache", new TimeExpirationPolicy(0), 50_000, 3_000))
+        cache.registerRegion(new Region("standardCache", new TimeExpirationPolicy(1000), 50_000))
+        cache.registerRegion(new Region("impatientCache", new TimeExpirationPolicy(0), 50_000))
         return cache
     }
     

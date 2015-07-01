@@ -17,6 +17,7 @@ package org.kielo.smartcache.aggregator;
 
 import org.kielo.smartcache.action.ActionResolvingException;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -36,10 +37,10 @@ public class RequestQueueFuture<T> {
         this.key = key;
     }
 
-    public T resolve(long maxWaitTime) throws TimeoutException {
+    public T resolve(Duration timeout) throws TimeoutException {
         T value = null;
         try {
-            value = future.get(maxWaitTime, TimeUnit.MILLISECONDS);
+            value = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (ExecutionException exception) {
             throw new ActionResolvingException(exception.getCause());
         } catch (InterruptedException interruptedException) {

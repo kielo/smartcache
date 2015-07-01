@@ -4,6 +4,7 @@ import org.kielo.smartcache.CountingAction
 import org.kielo.smartcache.action.ActionResolvingException
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.Executors
 
 class RequestAggregatorTest extends Specification {
@@ -15,7 +16,7 @@ class RequestAggregatorTest extends Specification {
         RequestQueueFuture<Integer> future = aggregator.aggregate("key", CountingAction.immediate())
 
         when:
-        future.resolve(100)
+        future.resolve(Duration.ofMillis(100))
 
         then:
         !aggregator.contains('key')
@@ -26,7 +27,7 @@ class RequestAggregatorTest extends Specification {
         RequestQueueFuture<Integer> future = aggregator.aggregate("key", CountingAction.failImmediately())
 
         when:
-        future.resolve(100)
+        future.resolve(Duration.ofMillis(100))
 
         then:
         thrown(ActionResolvingException)

@@ -8,8 +8,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface SmartCached {
-    
+
     String region();
-    
-    String metricsPrefix();
+
+    String metricsPrefix() default "";
+
+    long timeout() default 1000;
 }

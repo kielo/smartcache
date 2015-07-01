@@ -15,8 +15,7 @@ class MetricsTest extends Specification {
     private SmartCache cache = new SmartCache(Executors.newCachedThreadPool(), metrics)
 
     def setup() {
-        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5, 1000))
-        cache.registerRegion(new Region('impatientRegion', new EternalExpirationPolicy(), 5, 20))
+        cache.registerRegion(new Region('region', new EternalExpirationPolicy(), 5))
     }
 
     def "should trigger metric action when cache was queried"() {
@@ -24,7 +23,7 @@ class MetricsTest extends Specification {
         CountingAction action = CountingAction.failImmediately()
 
         when:
-        cache.get('region', 'key', action)
+        cache.get('key').fromRegion('region').invoke(action)
 
         then:
         metrics.actionExecuted == 1
@@ -37,7 +36,7 @@ class MetricsTest extends Specification {
         cache.put('region', 'key', -1)
 
         when:
-        cache.get('region', 'key', action)
+        cache.get('key').fromRegion('region').invoke(action)
 
         then:
         metrics.actionExecuted == 0
@@ -50,8 +49,8 @@ class MetricsTest extends Specification {
         CountingAction action = CountingAction.waiting(20)
 
         when:
-        cache.get('region', 'key0', action)
-        cache.get('region', 'key1', action)
+        cache.get('key0').fromRegion('region').invoke(action)
+        cache.get('key1').fromRegion('region').invoke(action)
 
         then:
         Awaitility.await().pollInterval(10, TimeUnit.MILLISECONDS).timeout(50, TimeUnit.MILLISECONDS)
@@ -63,7 +62,7 @@ class MetricsTest extends Specification {
         CountingAction action = CountingAction.waiting(100)
 
         when:
-        cache.get('impatientRegion', 'key', action)
+        cache.get('key').fromRegion('region').withTimeout(20).invoke(action)
 
         then:
         metrics.timeouts == 1
@@ -74,7 +73,7 @@ class MetricsTest extends Specification {
         CountingAction action = CountingAction.failImmediately()
 
         when:
-        cache.get('region', 'key', action)
+        cache.get('key').fromRegion('region').invoke(action)
         
         then:
         metrics.errors == 1

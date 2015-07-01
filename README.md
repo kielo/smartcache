@@ -27,9 +27,12 @@ is returned and stored in cache.
 
 ```java
 SmartCache cache = new SmartCache(Executors.newCachedThreadPool());
-cache.registerRegion(new Region("region", new TimeExpirationPolicy(10000), 5, 1000));
+cache.registerRegion(new Region("region", new TimeExpirationPolicy(10000), 5));
 
-T value = cache.get("region", "key", /* new Callable<T> */);
+T value = cache.get("key")
+                .fromRegion("region")
+                .withTimeout(Duration.ofMillis(1000))
+                .invoke(() -> { /* action */ });
 ```
 
 
